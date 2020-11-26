@@ -1,11 +1,11 @@
-const {syntaxKind} = require('./types');
+const {syntaxKind, keywords} = require('./types');
 
 function isAlpha(char) {
-  return /\w/.test(char);
+  return /[a-z]/i.test(char);
 }
 
 function isNumber(char) {
-  return /\d/.test(char);
+  return /[0-9]/.test(char);
 }
 
 function matchEnding(received) {
@@ -70,7 +70,7 @@ function scanner(input) {
   function storeNumericToken() {
     let value = '';
 
-    while(/\d/.text(char)) {
+    while(/\d/.test(char)) {
       value += char;
       getNextCharacter();
     }
@@ -128,7 +128,20 @@ function scanner(input) {
     getNextCharacter(); // increment to the next char ready for the next iteration
   }
 
-  return tokens;
+  /**
+   * if any identifiers that are picked up are keywords specific to micro,
+   * change the type to reflect this in order for parsing to be accurate
+   */
+  return tokens.map((token) => {
+    if (token.type !== syntaxKind.identifier) {
+      return token;
+    }
+
+    const isKeyword = keywords.includes(token.value);
+    token.type = isKeyword ? syntaxKind.keyword : syntaxKind.identifier;
+
+    return token;
+  });
 }
 
 module.exports = {
