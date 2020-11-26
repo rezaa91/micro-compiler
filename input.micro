@@ -1,0 +1,2 @@
+// example input. P.s. this line is a comment
+begin A := BB - 314 + A ; end SCANEOF 
