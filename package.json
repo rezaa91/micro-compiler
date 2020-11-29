@@ -4,7 +4,7 @@
   "description": "a micro compiler built with js",
   "main": "index.js",
   "scripts": {
-    "test": "jest tests/ --silet",
+    "test": "jest tests/ --silent",
     "lint": "./node_modules/eslint/bin/eslint.js"
   },
   "author": "Ali Issaee",

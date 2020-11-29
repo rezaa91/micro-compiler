@@ -1,2 +1,14 @@
+// MICRO PROGRAMMING LANGUAGE
+//  integer is the only data type
+//  initialisation done using ':='
+//  each line should end with ';'
+//  program should start with 'begin' and end with 'end SCANEOF'
+
 // example input. P.s. this line is a comment
-begin A := BB - 314 + A ; end SCANEOF 
+begin
+    A := 310 ;
+
+    // answer should be 220
+    B := A + 10 - 100 ;
+
+end SCANEOF

@@ -1,4 +1,5 @@
-const {syntaxKind, keywords} = require('./types');
+const {syntaxKind, characters, keywords} = require('./types');
+const {setSymbol} = require('./symbol_table');
 
 function isAlpha(char) {
   return /[a-z]/i.test(char);
@@ -21,6 +22,10 @@ function match(expected, received) {
   if (expected !== received) {
     throw new TypeError(`Expected ${expected}. Received ${received}`);
   }
+}
+
+function isKeyword(input) {
+  return Object.values(keywords).find(keyword => keyword === input);
 }
 
 /**
@@ -64,7 +69,18 @@ function scanner(input) {
 
     matchEnding(char);
 
-    tokens.push({type: syntaxKind.identifier, value});
+    /**
+     * store the identifier in the symbol table and reference the id
+     * in the token attributes
+     */
+    if (!isKeyword(value)) {
+      const symbolId = setSymbol(value);
+      tokens.push({type: syntaxKind.identifier, value, symbolId});
+
+      return;
+    }
+
+    tokens.push({type: syntaxKind.keyword, value})
   }
 
   function storeNumericToken() {
@@ -84,33 +100,33 @@ function scanner(input) {
     let next = null; // used by some case statements to get the next character in the input stream
 
     switch (char) {
-      case ' ':
-      case '\n':
-      case '\t':
+      case characters.whitespace:
+      case characters.lineBreak:
+      case characters.tab:
         break; // do nothing - we don't care for whitespaces, new lines or tabs
-      case '+':
+      case characters.plusOp:
         tokens.push({type: syntaxKind.plusOp, value: char});
         break;
-      case '-':
+      case characters.minusOp:
         tokens.push({type: syntaxKind.minusOp, value: char});
         break;
-      case ';':
+      case characters.semiColon:
         tokens.push({type: syntaxKind.semiColon, value: char});
         break;
-      case ':': // first char of initialiser symbol (:=)
+      case characters.colon: // first char of initialiser symbol (:=)
         next = getNextCharacter();
-        match('=', next);
+        match(characters.equals, next);
 
         next = getNextCharacter();
-        match(' ', next);
+        match(characters.whitespace, next);
 
         tokens.push({type: syntaxKind.initialiser, value: ':='});
         break;
-      case '/': // start of a comment?
+      case characters.backSlash: // start of a comment?
         next = getNextCharacter();
-        match('/', next);
+        match(characters.backSlash, next);
 
-        while(getNextCharacter() !== '\n');
+        while(getNextCharacter() !== characters.lineBreak);
         break;
       default:
         if (isAlpha(char)) {
@@ -128,20 +144,7 @@ function scanner(input) {
     getNextCharacter(); // increment to the next char ready for the next iteration
   }
 
-  /**
-   * if any identifiers that are picked up are keywords specific to micro,
-   * change the type to reflect this in order for parsing to be accurate
-   */
-  return tokens.map((token) => {
-    if (token.type !== syntaxKind.identifier) {
-      return token;
-    }
-
-    const isKeyword = keywords.includes(token.value);
-    token.type = isKeyword ? syntaxKind.keyword : syntaxKind.identifier;
-
-    return token;
-  });
+  return tokens;
 }
 
 module.exports = {

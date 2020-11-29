@@ -1,13 +1,5 @@
-const {syntaxKind} = require('./types');
-
-/**
- * e.g.
- *      {
- *        varA: 10,
- *        varB: 97
- *      }
- */
-const symbolTable = {};
+const {syntaxKind, characters, keywords} = require('./types');
+const {setSymbolValue, existsInSymbolTable} = require('./symbol_table');
 
 let pointer = -1;
 const lexemes = [];
@@ -16,6 +8,10 @@ function match(expected, received) {
   if (expected !== received) {
     throw new Error(`Expected ${expected}. Received ${received}`);
   }
+}
+
+function assert(expected, received) {
+  return expected === received;
 }
 
 function getCurrentToken() {
@@ -46,23 +42,17 @@ function expression() {
    * If a '+' or '-' follows, keep checking the rest of the expression
    * e.g. A + 310 - 12 + 67 <---- we want to make sure the full expression is correct
    */
-  for (token = getNextToken(); token.value === '+' || token.value === '-'; token = getNextToken()) {
+  for (
+    token = getNextToken();
+    token.value === characters.plusOp || token.value === characters.minusOp;
+    token = getNextToken()
+  ) {
     primary(getNextToken().type);
   }
 
   pointer--; // decrement pointer to compensate for incrementing on last iteration of for loop
 }
 
-function storeInSymbolTable(prop, value) {
-  symbolTable[prop] = value;
-}
-
-function existsInSymbolTable(prop) {
-  /**
-   * Check if the variable exists in the symbol table
-   */
-  return Boolean(symbolTable[prop]);
-}
 
 function statement(type) {
   const currentToken = getCurrentToken();
@@ -71,13 +61,13 @@ function statement(type) {
     case syntaxKind.identifier:
       match(type, currentToken.type);
 
-      if (!existsInSymbolTable(currentToken.value)) {
+      if (assert(':=', peek().value)) {
         match(':=', getNextToken().value);
-        storeInSymbolTable(currentToken.value, peek().value); // peek the value to store, e.g. A := 10
+        setSymbolValue(currentToken.symbolId, peek().value); // peek the value to store, e.g. A := 10
       }
 
       expression();
-      match(';', getNextToken().value);
+      match(characters.semiColon, getNextToken().value);
       break;
     default:
       throw new Error(`unrecognised token: "${currentToken}"`);
@@ -103,9 +93,9 @@ function program() {
   /**
    * match: begin <statementList> end
    */
-  match('begin', getNextToken().value);
+  match(keywords.beginKeyword, getNextToken().value);
   statementList();
-  match('end', getNextToken().value);
+  match(keywords.endKeyword, getNextToken().value);
 }
 
 function systemGoal() {
@@ -113,7 +103,7 @@ function systemGoal() {
    * match: <program> SCANEOF
    */
   program();
-  match('SCANEOF', getNextToken().value); // assert program ends with SCANEOF
+  match(keywords.scaneofKeyword, getNextToken().value); // assert program ends with SCANEOF
 }
 
 function parser(tokens) {
