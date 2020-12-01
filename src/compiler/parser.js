@@ -63,6 +63,9 @@ function statement(type) {
 
       if (assert(':=', peek().value)) {
         match(':=', getNextToken().value);
+
+        // TODO - bug here! We want to store the full expression value; e.g: A := B + 12 - 1;
+        //                                                                        ^   ^^   ^
         setSymbolValue(currentToken.symbolId, peek().value); // peek the value to store, e.g. A := 10
       }
 
