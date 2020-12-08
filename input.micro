@@ -12,3 +12,7 @@ begin
     B := A + 10 - 100 ;
 
 end SCANEOF
+
+// expected output should be (when transpiled to JS):
+    // var A = 310;
+    // var B = 120;
